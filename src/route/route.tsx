@@ -8,6 +8,7 @@ import About from "../components/About/About";
 import Events from "../components/Events/Events";
 import SingleEvent from "../components/SingleEvent/SingleEvent";
 import People from "../components/People/People";
+import Blog from "../components/Blog/Blog";
 
 const router = createBrowserRouter([
   {
@@ -37,6 +38,10 @@ const router = createBrowserRouter([
       {
         path: "/people",
         Component: People,
+      },
+      {
+        path: "/blog",
+        Component: Blog,
       },
     ],
   },

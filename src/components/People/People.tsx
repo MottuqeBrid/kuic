@@ -110,6 +110,13 @@ const People: React.FC = () => {
     }
   }
 
+  // Precompute leaders so we can both show them prominently and exclude them from the main list
+  const leaderPositions = ["President", "Vice President", "Treasurer"];
+  const leaders = leaderPositions.map((pos) =>
+    people.find((p) => (p.Position || "").toLowerCase() === pos.toLowerCase())
+  );
+  const leaderIds = new Set(leaders.filter(Boolean).map((l) => l!.MemberID));
+
   return (
     <section className="py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -123,6 +130,78 @@ const People: React.FC = () => {
             Meet the students and mentors that power KUIC.
           </p>
         </motion.div>
+
+        {/* Leaders strip: show President, Vice President and Treasurer */}
+        <div className="mt-6 mb-6">
+          {/* <h3 className="text-xl font-semibold mb-3">Leaders</h3> */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {leaders.map((leader, idx) =>
+              leader ? (
+                <div
+                  key={leader.MemberID}
+                  className="card bg-gradient-to-r from-primary/10 to-base-200 p-4 flex items-center gap-4 border-l-4 border-primary"
+                >
+                  <img
+                    src={leader.PhotoURL || fallbackPhoto}
+                    alt={leader.FullName}
+                    className="w-24 h-24 rounded-full object-cover ring-2 ring-primary"
+                    onError={(e) =>
+                      ((e.target as HTMLImageElement).src = fallbackPhoto)
+                    }
+                  />
+                  <div className="flex-1 w-full">
+                    <div className="">
+                      <div>
+                        <div className="text-lg font-semibold">
+                          {leader.FullName}
+                        </div>
+                        <div className="text-sm text-muted">
+                          {leader.Position} — {leader.Department}
+                        </div>
+                      </div>
+                      <div>
+                        <span className={statusClass(leader.Status)}>
+                          {leader.Status || "Unknown"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-sm text-base-content/70 truncate">
+                      {leader.Bio}
+                    </div>
+                    <div className="mt-3 flex items-center flex-wrap gap-3 text-sm">
+                      {leader.SocialMedia &&
+                        Object.entries(leader.SocialMedia)
+                          .slice(0, 4)
+                          .map(([k, v]) => (
+                            <a
+                              key={k}
+                              href={v}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="link link-primary flex items-center gap-2"
+                              aria-label={`Open ${leader.FullName}'s ${k}`}
+                            >
+                              {renderSocialIcon(k)}
+                              <span className="sr-only">{k}</span>
+                              <span className="hidden sm:inline">{k}</span>
+                            </a>
+                          ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  key={idx}
+                  className="card bg-base-200 p-4 flex items-center justify-center"
+                >
+                  <div className="text-sm text-muted">
+                    No {leaderPositions[idx]} assigned
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 mt-6">
           <div className="flex gap-2 w-full sm:w-auto">
@@ -151,80 +230,79 @@ const People: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((m: Member) => (
-            <article
-              key={m.MemberID}
-              className="card bg-base-100 shadow hover:shadow-lg transition"
-            >
-              <div className="flex flex-col gap-4 p-4">
-                <img
-                  src={m.PhotoURL || fallbackPhoto}
-                  alt={m.FullName}
-                  className="w-20 h-20 rounded-lg object-cover"
-                  onError={(e) =>
-                    ((e.target as HTMLImageElement).src = fallbackPhoto)
-                  }
-                />
+          {filtered
+            .filter((m) => !leaderIds.has(m.MemberID))
+            .map((m: Member) => (
+              <article
+                key={m.MemberID}
+                className="card bg-base-100 shadow hover:shadow-lg transition"
+              >
+                <div className="flex flex-col gap-4 p-4">
+                  <img
+                    src={m.PhotoURL || fallbackPhoto}
+                    alt={m.FullName}
+                    className="w-20 h-20 rounded-lg object-cover"
+                    onError={(e) =>
+                      ((e.target as HTMLImageElement).src = fallbackPhoto)
+                    }
+                  />
 
-                <div className="flex-1">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">{m.FullName}</h3>
-                      <p className="text-sm text-muted">
-                        {m.Position} — {m.Department}
-                      </p>
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-semibold">{m.FullName}</h3>
+                        <p className="text-sm text-muted">
+                          {m.Position} — {m.Department}
+                        </p>
+                      </div>
+                      <div>
+                        <span className={statusClass(m?.Status)}>
+                          {m?.Status || "Unknown"}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <span className={statusClass(m.Status)}>
-                        {m.Status || "Unknown"}
-                      </span>
+
+                    <p className="mt-2 text-sm text-base-content/75 line-clamp-3">
+                      {m.Bio}
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {(m.SkillsExpertise || []).slice(0, 6).map((s) => (
+                        <span key={s} className="badge badge-outline">
+                          {s}
+                        </span>
+                      ))}
                     </div>
-                  </div>
 
-                  <p className="mt-2 text-sm text-base-content/75 line-clamp-3">
-                    {m.Bio}
-                  </p>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {(m.SkillsExpertise || []).slice(0, 6).map((s) => (
-                      <span key={s} className="badge badge-outline">
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="mt-3 flex items-center flex-wrap gap-3 text-sm">
-                    {m.SocialMedia &&
-                      Object.entries(m.SocialMedia)
-                        .slice(0, 4)
-                        .map(([k, v]) => (
-                          <a
-                            key={k}
-                            href={v}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="link link-primary flex items-center gap-2"
-                            aria-label={`Open ${m.FullName}'s ${k}`}
-                          >
-                            {renderSocialIcon(k)}
-                            <span className="sr-only">{k}</span>
-                            <span className="hidden sm:inline">{k}</span>
-                          </a>
-                        ))}
+                    <div className="mt-3 flex items-center flex-wrap gap-3 text-sm">
+                      {m.SocialMedia &&
+                        Object.entries(m.SocialMedia)
+                          .slice(0, 4)
+                          .map(([k, v]) => (
+                            <a
+                              key={k}
+                              href={v}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="link link-primary flex items-center gap-2"
+                              aria-label={`Open ${m.FullName}'s ${k}`}
+                            >
+                              {renderSocialIcon(k)}
+                              <span className="sr-only">{k}</span>
+                              <span className="hidden sm:inline">{k}</span>
+                            </a>
+                          ))}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="card-actions p-4 pt-0">
-                <div className="flex items-center justify-between w-full text-xs text-muted">
-                  <div>Joined: {formatDate(m.JoinDate)}</div>
-                  <div>
-                    Events: <strong>{m.EventParticipationCount ?? 0}</strong>
+                <div className="card-actions p-4 pt-0">
+                  <div className="flex items-center justify-end w-full text-xs text-muted">
+                    <div>Joined: {formatDate(m.JoinDate)}</div>
                   </div>
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            ))}
         </div>
 
         {filtered.length === 0 && (

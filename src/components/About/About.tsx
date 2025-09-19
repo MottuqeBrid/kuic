@@ -1,3 +1,5 @@
+import FAQs from "../FAQs/FAQs";
+
 const About = () => {
   return (
     <section className="py-16 bg-base-200">
@@ -118,6 +120,8 @@ const About = () => {
           </div>
         </div>
       </div>
+
+      <FAQs />
     </section>
   );
 };
