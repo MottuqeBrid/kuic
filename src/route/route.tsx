@@ -4,6 +4,10 @@ import Home from "../pages/Home/Home";
 import AuthLayout from "../layouts/AuthLayout/AuthLayout";
 import ErrorPage from "../pages/ErrorPage/ErrorPage";
 import Gallery from "../components/Gallery/Gallery";
+import About from "../components/About/About";
+import Events from "../components/Events/Events";
+import SingleEvent from "../components/SingleEvent/SingleEvent";
+import People from "../components/People/People";
 
 const router = createBrowserRouter([
   {
@@ -16,11 +20,23 @@ const router = createBrowserRouter([
       },
       {
         path: "/about",
-        element: <h1>About</h1>,
+        Component: About,
       },
       {
         path: "/gallery",
         Component: Gallery,
+      },
+      {
+        path: "/events",
+        Component: Events,
+      },
+      {
+        path: "/events/:id",
+        Component: SingleEvent,
+      },
+      {
+        path: "/people",
+        Component: People,
       },
     ],
   },
