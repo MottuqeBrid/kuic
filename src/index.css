@@ -1,0 +1,57 @@
+html {
+  scroll-behavior: smooth;
+}
+
+@import "tailwindcss";
+@plugin "daisyui";
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  --color-primary: #ff6b35;
+  --color-secondary: #ffe5d9;
+  --color-accent: #ff6b35;
+  --color-base-100: #f8f9fa;
+  --color-base-200: #e9ecef;
+  --color-base-300: #dee2e6;
+  --color-base-content: #1a1a1a;
+  --color-neutral: #6c757d;
+  --color-info: #0d6efd;
+  --color-success: #198754;
+  --color-warning: #ffc107;
+  --color-error: #dc3545;
+}
+@plugin "daisyui/theme" {
+  name: "dark";
+  --color-primary: #ff6b35;
+  --color-secondary: #2d1b0e;
+  --color-accent: #ff6b35;
+  --color-base-100: #1a1a1a;
+  --color-base-200: #2d2d2d;
+  --color-base-300: #404040;
+  --color-base-content: #ffffff;
+  --color-neutral: #6c757d;
+  --color-info: #0d6efd;
+  --color-success: #198754;
+  --color-warning: #ffc107;
+  --color-error: #dc3545;
+}
+
+a.active {
+  color: #ff6b35 !important;
+}
+
+.carousel .legend {
+  display: none !important;
+}
+.carousel .control-dots {
+  bottom: 2rem !important;
+}
+.carousel .control-dots .dot {
+  background: rgba(255, 255, 255, 0.5) !important;
+  width: 12px !important;
+  height: 12px !important;
+  margin: 0 6px !important;
+}
+.carousel .control-dots .dot.selected {
+  background: #ff6b35 !important;
+}
