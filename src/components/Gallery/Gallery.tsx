@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { useState } from "react";
+import { format, parseISO } from "date-fns";
 import {
   FaSearch,
   FaTimes,
@@ -8,187 +9,206 @@ import {
   FaHeart,
   FaCalendarAlt,
   FaMapMarkerAlt,
-  FaUsers,
 } from "react-icons/fa";
 
 // Demo Gallery Data - KUIC Events and Activities
 const galleryData = [
   {
     id: 1,
-    title: "Tech Innovation Summit 2024",
+    title: "Future of AI & Machine Learning Conference 2024",
     image:
-      "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&h=600&fit=crop",
-    category: "Events",
-    date: "2024-03-15",
-    location: "Khulna University Campus",
-    attendees: 250,
-    description:
-      "Annual tech summit featuring industry leaders, workshops, and networking opportunities.",
-    tags: ["Technology", "Innovation", "Networking", "Workshop"],
-    likes: 45,
+      "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop",
+    category: "Technology",
+    date: "2024-03-22",
+    location: "KUIC Main Auditorium",
+    likes: 89,
     isLiked: false,
   },
   {
     id: 2,
-    title: "Science Fair Exhibition",
+    title: "Quantum Computing Workshop Series",
     image:
-      "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&h=600&fit=crop",
     category: "Science",
-    date: "2024-02-20",
-    location: "KU Science Building",
-    attendees: 180,
-    description:
-      "Student science projects showcasing innovative research and experiments.",
-    tags: ["Science", "Research", "Exhibition", "Students"],
-    likes: 32,
+    date: "2024-03-18",
+    location: "KU Advanced Physics Lab",
+    likes: 67,
     isLiked: true,
   },
   {
     id: 3,
-    title: "Startup Pitch Competition",
+    title: "Startup Funding & Investment Summit",
     image:
       "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&h=600&fit=crop",
     category: "Entrepreneurship",
-    date: "2024-01-25",
-    location: "KU Business School",
-    attendees: 120,
-    description:
-      "Entrepreneurial students pitch their innovative business ideas to industry judges.",
-    tags: ["Entrepreneurship", "Startup", "Pitch", "Business"],
-    likes: 28,
+    date: "2024-03-15",
+    location: "KU Innovation Hub",
+    likes: 94,
     isLiked: false,
   },
   {
     id: 4,
-    title: "Philosophy Discussion Circle",
+    title: "Ethics of Artificial Intelligence Symposium",
     image:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop",
     category: "Philosophy",
-    date: "2024-02-10",
-    location: "KU Humanities Building",
-    attendees: 45,
-    description:
-      "Deep philosophical discussions on ethics, logic, and modern society.",
-    tags: ["Philosophy", "Discussion", "Ethics", "Critical Thinking"],
-    likes: 19,
+    date: "2024-03-12",
+    location: "KU Philosophy Department",
+    likes: 56,
     isLiked: true,
   },
   {
     id: 5,
-    title: "AI Workshop Series",
+    title: "Biotechnology Innovation Expo",
     image:
-      "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop",
-    category: "Technology",
-    date: "2024-03-05",
-    location: "KU Computer Lab",
-    attendees: 80,
-    description:
-      "Hands-on workshops on artificial intelligence and machine learning applications.",
-    tags: ["AI", "Machine Learning", "Workshop", "Technology"],
-    likes: 41,
+      "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=600&fit=crop",
+    category: "Science",
+    date: "2024-03-10",
+    location: "KU Science Complex",
+    likes: 78,
     isLiked: false,
   },
   {
     id: 6,
-    title: "Research Symposium",
+    title: "Blockchain & Cryptocurrency Deep Dive",
     image:
-      "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop",
-    category: "Science",
-    date: "2024-01-15",
-    location: "KU Conference Hall",
-    attendees: 200,
-    description:
-      "Academic research presentations by faculty and graduate students.",
-    tags: ["Research", "Academic", "Symposium", "Presentation"],
-    likes: 37,
+      "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=600&fit=crop",
+    category: "Technology",
+    date: "2024-03-08",
+    location: "KU Computer Science Lab",
+    likes: 71,
     isLiked: true,
   },
   {
     id: 7,
-    title: "Mobile App Development Bootcamp",
+    title: "Social Entrepreneurship Challenge",
     image:
-      "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=600&fit=crop",
-    category: "Technology",
-    date: "2024-02-28",
-    location: "KU Innovation Lab",
-    attendees: 60,
-    description: "Intensive mobile app development training for students.",
-    tags: ["Mobile Development", "Bootcamp", "Programming", "Apps"],
-    likes: 33,
+      "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&h=600&fit=crop",
+    category: "Entrepreneurship",
+    date: "2024-03-05",
+    location: "KU Community Center",
+    likes: 112,
     isLiked: false,
   },
   {
     id: 8,
-    title: "Ethics in Technology Panel",
+    title: "Philosophy of Science & Knowledge",
     image:
-      "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=600&fit=crop",
     category: "Philosophy",
-    date: "2024-03-12",
-    location: "KU Auditorium",
-    attendees: 150,
-    description:
-      "Panel discussion on ethical implications of emerging technologies.",
-    tags: ["Ethics", "Technology", "Panel", "Discussion"],
-    likes: 24,
+    date: "2024-03-02",
+    location: "KU Library Lecture Hall",
+    likes: 43,
     isLiked: true,
   },
   {
     id: 9,
-    title: "Green Technology Expo",
+    title: "Climate Tech & Sustainability Fair",
     image:
       "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&h=600&fit=crop",
     category: "Science",
-    date: "2024-02-05",
+    date: "2024-02-28",
     location: "KU Green Campus",
-    attendees: 300,
-    description:
-      "Exhibition of sustainable and environmentally friendly technologies.",
-    tags: ["Green Tech", "Sustainability", "Environment", "Expo"],
-    likes: 56,
+    likes: 156,
     isLiked: false,
   },
   {
     id: 10,
-    title: "Business Model Canvas Workshop",
+    title: "Product Management & Design Thinking",
     image:
       "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop",
     category: "Entrepreneurship",
-    date: "2024-01-30",
-    location: "KU Business Incubator",
-    attendees: 40,
-    description: "Workshop on creating effective business models for startups.",
-    tags: ["Business Model", "Startup", "Workshop", "Planning"],
-    likes: 21,
+    date: "2024-02-25",
+    location: "KU Design Studio",
+    likes: 83,
     isLiked: true,
   },
   {
     id: 11,
-    title: "Cybersecurity Awareness Session",
+    title: "Cybersecurity & Digital Privacy Summit",
     image:
       "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&h=600&fit=crop",
     category: "Technology",
-    date: "2024-03-08",
-    location: "KU IT Center",
-    attendees: 90,
-    description:
-      "Educational session on cybersecurity best practices and threats.",
-    tags: ["Cybersecurity", "Security", "Education", "IT"],
-    likes: 29,
+    date: "2024-02-22",
+    location: "KU IT Security Center",
+    likes: 91,
     isLiked: false,
   },
   {
     id: 12,
-    title: "Critical Thinking Workshop",
+    title: "Logic & Critical Reasoning Workshop",
+    image:
+      "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&h=600&fit=crop",
+    category: "Philosophy",
+    date: "2024-02-20",
+    location: "KU Philosophy Seminar Room",
+    likes: 38,
+    isLiked: true,
+  },
+  {
+    id: 13,
+    title: "Space Technology & Exploration Conference",
+    image:
+      "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=800&h=600&fit=crop",
+    category: "Science",
+    date: "2024-02-18",
+    location: "KU Astronomy Observatory",
+    likes: 127,
+    isLiked: false,
+  },
+  {
+    id: 14,
+    title: "Web3 & Decentralized Applications Workshop",
+    image:
+      "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=600&fit=crop",
+    category: "Technology",
+    date: "2024-02-15",
+    location: "KU Innovation Lab",
+    likes: 89,
+    isLiked: true,
+  },
+  {
+    id: 15,
+    title: "Lean Startup Methodology Bootcamp",
+    image:
+      "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&h=600&fit=crop",
+    category: "Entrepreneurship",
+    date: "2024-02-12",
+    location: "KU Business Incubator",
+    likes: 65,
+    isLiked: false,
+  },
+  {
+    id: 16,
+    title: "Mind, Consciousness & Reality Debate",
     image:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop",
     category: "Philosophy",
-    date: "2024-02-15",
-    location: "KU Library",
-    attendees: 35,
-    description:
-      "Interactive workshop on developing critical thinking and logical reasoning skills.",
-    tags: ["Critical Thinking", "Logic", "Workshop", "Skills"],
-    likes: 18,
+    date: "2024-02-10",
+    location: "KU Main Lecture Theater",
+    likes: 72,
+    isLiked: true,
+  },
+  {
+    id: 17,
+    title: "Nanotechnology Research Showcase",
+    image:
+      "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&h=600&fit=crop",
+    category: "Science",
+    date: "2024-02-08",
+    location: "KU Materials Science Lab",
+    likes: 98,
+    isLiked: false,
+  },
+  {
+    id: 18,
+    title: "Full-Stack Development Intensive",
+    image:
+      "https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?w=800&h=600&fit=crop",
+    category: "Technology",
+    date: "2024-02-05",
+    location: "KU Programming Lab",
+    likes: 104,
     isLiked: true,
   },
 ];
@@ -211,16 +231,13 @@ const Gallery = () => {
   const filteredImages = galleryData.filter((item) => {
     const matchesCategory =
       selectedCategory === "All" || item.category === selectedCategory;
-    const matchesSearch =
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.tags.some((tag) =>
-        tag.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    const matchesSearch = item.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
-  const handleLike = (id) => {
+  const handleLike = (id: number) => {
     setLikedImages((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
@@ -232,7 +249,7 @@ const Gallery = () => {
     });
   };
 
-  const handleDownload = (imageUrl, title) => {
+  const handleDownload = (imageUrl: string, title: string) => {
     // Create a temporary link element to trigger download
     const link = document.createElement("a");
     link.href = imageUrl;
@@ -243,7 +260,7 @@ const Gallery = () => {
     document.body.removeChild(link);
   };
 
-  const handleShare = async (imageUrl, title) => {
+  const handleShare = async (imageUrl: string, title: string) => {
     if (navigator.share) {
       try {
         await navigator.share({
@@ -264,13 +281,19 @@ const Gallery = () => {
     }
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+  const formatDate = (dateString: string) => {
+    try {
+      const date = parseISO(dateString);
+      return format(date, "MMMM d, yyyy");
+    } catch {
+      // Fallback to original formatting if date-fns fails
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    }
   };
 
   return (
@@ -348,7 +371,8 @@ const Gallery = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               className="bg-base-200 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
-              onClick={() => setSelectedImage(item)}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              onClick={() => setSelectedImage(item as any)}
             >
               {/* Image */}
               <div className="relative h-48 overflow-hidden">
@@ -377,7 +401,10 @@ const Gallery = () => {
                     <FaHeart />
                   </motion.button>
                   <motion.button
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      return handleShare(item.image, item.title);
+                    }}
                     className="p-2 bg-white/20 text-white rounded-full backdrop-blur-sm"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
@@ -399,9 +426,6 @@ const Gallery = () => {
                 <h3 className="font-bold text-base-content mb-2 line-clamp-2 group-hover:text-primary transition-colors duration-300">
                   {item.title}
                 </h3>
-                <p className="text-sm text-base-content/70 mb-3 line-clamp-2">
-                  {item.description}
-                </p>
 
                 {/* Meta Info */}
                 <div className="space-y-2 text-xs text-base-content/60">
@@ -413,27 +437,6 @@ const Gallery = () => {
                     <FaMapMarkerAlt className="text-primary" />
                     <span className="line-clamp-1">{item.location}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <FaUsers className="text-primary" />
-                    <span>{item.attendees} attendees</span>
-                  </div>
-                </div>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-1 mt-3">
-                  {item.tags.slice(0, 2).map((tag, tagIndex) => (
-                    <span
-                      key={tagIndex}
-                      className="px-2 py-1 bg-primary/10 text-primary rounded text-xs"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                  {item.tags.length > 2 && (
-                    <span className="px-2 py-1 bg-base-300 text-base-content/70 rounded text-xs">
-                      +{item.tags.length - 2}
-                    </span>
-                  )}
                 </div>
               </div>
             </motion.div>
@@ -478,7 +481,7 @@ const Gallery = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-base-300">
               <h3 className="text-2xl font-bold text-base-content">
-                {selectedImage.title}
+                {(selectedImage as { title?: string })?.title}
               </h3>
               <button
                 onClick={() => setSelectedImage(null)}
@@ -494,61 +497,53 @@ const Gallery = () => {
                 {/* Image */}
                 <div className="relative mb-6">
                   <img
-                    src={selectedImage.image}
-                    alt={selectedImage.title}
+                    src={(selectedImage as { image?: string })?.image ?? ""}
+                    alt={(selectedImage as { title?: string })?.title ?? ""}
                     className="w-full h-64 object-cover rounded-lg"
                   />
                 </div>
 
                 {/* Event Details - Compact Format */}
                 <div className="space-y-4">
-                  {/* Description */}
-                  <p className="text-base-content/80 leading-relaxed">
-                    {selectedImage.description}
-                  </p>
-
                   {/* Event Info - Single Column */}
                   <div className="space-y-2 text-sm text-base-content/70">
                     <div className="flex items-center gap-2">
                       <FaCalendarAlt className="text-primary" />
-                      <span>{formatDate(selectedImage.date)}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
+                      <span>
+                        {formatDate(
+                          typeof (selectedImage as { date?: string | Date })
+                            ?.date === "string"
+                            ? (selectedImage as { date?: string })?.date ?? ""
+                            : (selectedImage as { date?: Date })?.date
+                            ? (
+                                (selectedImage as { date?: Date })?.date as Date
+                              ).toISOString()
+                            : ""
+                        )}
+                      </span>
                       <FaMapMarkerAlt className="text-primary" />
-                      <span>{selectedImage.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <FaUsers className="text-primary" />
-                      <span>{selectedImage.attendees} attendees</span>
-                    </div>
-                  </div>
-
-                  {/* Category and Tags */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="px-3 py-1 bg-primary text-white rounded-full text-sm font-medium">
-                      {selectedImage.category}
-                    </span>
-                    {selectedImage.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 bg-primary/10 text-primary rounded text-sm"
-                      >
-                        {tag}
+                      <span>
+                        {(selectedImage as { location?: string })?.location ??
+                          ""}
                       </span>
-                    ))}
-                    {selectedImage.tags.length > 3 && (
-                      <span className="px-2 py-1 bg-base-300 text-base-content/70 rounded text-sm">
-                        +{selectedImage.tags.length - 3}
-                      </span>
-                    )}
+                    </div>
                   </div>
 
                   {/* Actions */}
                   <div className="flex gap-3 pt-4 border-t border-base-300">
                     <motion.button
-                      onClick={() => handleLike(selectedImage.id)}
+                      onClick={() => {
+                        const id = Number(
+                          (selectedImage as { id?: string | number })?.id
+                        );
+                        if (!isNaN(id)) {
+                          handleLike(id);
+                        }
+                      }}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
-                        likedImages.has(selectedImage.id)
+                        likedImages.has(
+                          (selectedImage as { id?: string | number })?.id
+                        )
                           ? "bg-red-500 text-white"
                           : "bg-base-200 text-base-content hover:bg-base-300"
                       }`}
@@ -556,11 +551,18 @@ const Gallery = () => {
                       whileTap={{ scale: 0.95 }}
                     >
                       <FaHeart />
-                      {likedImages.has(selectedImage.id) ? "Liked" : "Like"}
+                      {likedImages.has(
+                        (selectedImage as { id?: string | number })?.id
+                      )
+                        ? "Liked"
+                        : "Like"}
                     </motion.button>
                     <motion.button
                       onClick={() =>
-                        handleDownload(selectedImage.image, selectedImage.title)
+                        handleDownload(
+                          (selectedImage as { image?: string })?.image ?? "",
+                          (selectedImage as { title?: string })?.title ?? ""
+                        )
                       }
                       className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors duration-300"
                       whileHover={{ scale: 1.05 }}
@@ -571,7 +573,10 @@ const Gallery = () => {
                     </motion.button>
                     <motion.button
                       onClick={() =>
-                        handleShare(selectedImage.image, selectedImage.title)
+                        handleShare(
+                          (selectedImage as { image?: string })?.image ?? "",
+                          (selectedImage as { title?: string })?.title ?? ""
+                        )
                       }
                       className="flex items-center gap-2 px-4 py-2 bg-base-200 text-base-content rounded-lg font-medium hover:bg-base-300 transition-colors duration-300"
                       whileHover={{ scale: 1.05 }}
