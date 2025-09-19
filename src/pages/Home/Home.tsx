@@ -1,4 +1,5 @@
 import Hero from "../../components/Hero/Hero";
+import OurSegments from "../../components/OurSegments/OurSegments";
 import UpcomingEvent from "../../components/UpcomingEvent/UpcomingEvent";
 
 const Home = () => {
@@ -6,6 +7,7 @@ const Home = () => {
     <div className="space-y-2">
       <Hero />
       <UpcomingEvent />
+      <OurSegments />
     </div>
   );
 };
