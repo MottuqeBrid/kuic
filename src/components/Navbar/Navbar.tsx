@@ -16,6 +16,7 @@ const Navbar = () => {
     { to: "/gallery", label: "Gallery" },
     { to: "/people", label: "People" },
     { to: "/about", label: "About" },
+    { to: "/admin", label: "Admin" },
   ];
 
   const toggleMobileMenu = () => {

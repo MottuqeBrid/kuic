@@ -27,14 +27,14 @@ const People: React.FC = () => {
 
   const departments = useMemo(() => {
     const s = new Set<string>();
-    people.forEach((p) => s.add(p.Discipline || "Unknown"));
+    people.forEach((p) => s.add(p.Department || "Unknown"));
     return ["All", ...Array.from(s).sort()];
   }, [people]);
 
   const filtered = useMemo(() => {
     const ql = q.trim().toLowerCase();
     return people.filter((p) => {
-      if (dept !== "All" && p.Discipline !== dept) return false;
+      if (dept !== "All" && p.Department !== dept) return false;
       if (!ql) return true;
       return (
         p.FullName.toLowerCase().includes(ql) ||
@@ -156,7 +156,7 @@ const People: React.FC = () => {
                           {leader.FullName}
                         </div>
                         <div className="text-sm text-muted">
-                          {leader.Position} — {leader.Discipline}
+                          {leader.Position} — {leader.Department}
                         </div>
                       </div>
                       <div>
@@ -252,7 +252,7 @@ const People: React.FC = () => {
                       <div>
                         <h3 className="text-lg font-semibold">{m.FullName}</h3>
                         <p className="text-sm text-muted">
-                          {m.Position} — {m.Discipline}
+                          {m.Position} — {m.Department}
                         </p>
                       </div>
                       <div>
