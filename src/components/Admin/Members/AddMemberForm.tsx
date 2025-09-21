@@ -157,15 +157,12 @@ const AddMemberForm: React.FC<Props> = ({
     }
   });
 
+  console.log(initialValues);
+
   return (
     <div className="overflow-y-auto max-h-[80vh] pr-2">
-      {/* <div className="flex justify-between items-center mt-6">
-        <h2 className="text-2xl mb-4">Add New Member</h2>
-        <Link to="/admin" className="btn btnLink">
-          Back to members
-        </Link>
-      </div> */}
       <form onSubmit={onSubmit} className="space-y-4">
+        {/* name */}
         <div>
           <label htmlFor="FullName" className="block text-sm font-medium">
             Full name
@@ -180,7 +177,7 @@ const AddMemberForm: React.FC<Props> = ({
             <div className="text-sm text-error">Name is required</div>
           )}
         </div>
-
+        {/* email */}
         <div>
           <label htmlFor="Email" className="block text-sm font-medium">
             Email
@@ -196,7 +193,7 @@ const AddMemberForm: React.FC<Props> = ({
             <div className="text-sm text-error">Email is required</div>
           )}
         </div>
-
+        {/* discipline */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="Discipline" className="block text-sm font-medium">
@@ -215,7 +212,7 @@ const AddMemberForm: React.FC<Props> = ({
               ))}
             </select>
           </div>
-
+          {/* position */}
           <div>
             <label htmlFor="Position" className="block text-sm font-medium">
               Position
@@ -231,7 +228,7 @@ const AddMemberForm: React.FC<Props> = ({
               <option value="Treasurer">Treasurer</option>
             </select>
           </div>
-
+          {/*  photo */}
           <div>
             <label htmlFor="PhotoURL" className="block text-sm font-medium">
               Photo URL
@@ -242,7 +239,7 @@ const AddMemberForm: React.FC<Props> = ({
               className="input w-full"
             />
           </div>
-
+          {/* phone */}
           <div>
             <label htmlFor="PhoneNumber" className="block text-sm font-medium">
               Phone
@@ -253,6 +250,7 @@ const AddMemberForm: React.FC<Props> = ({
               className="input w-full"
             />
           </div>
+          {/* year */}
           <div>
             <label htmlFor="YearBatch" className="block text-sm font-medium">
               Year / Batch
@@ -264,7 +262,7 @@ const AddMemberForm: React.FC<Props> = ({
             />
           </div>
         </div>
-
+        {/* bio */}
         <div>
           <label htmlFor="Bio" className="block text-sm font-medium">
             Bio
@@ -276,7 +274,26 @@ const AddMemberForm: React.FC<Props> = ({
             className="textarea w-full"
           />
         </div>
+        {initialValues && (
+          <>
+            <div>
+              <label htmlFor="Status" className="block text-sm font-medium">
+                Status
+              </label>
 
+              <select
+                id="Status"
+                className="select w-full"
+                {...register("Status")}
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Ex-Member">Ex-Member</option>
+              </select>
+            </div>
+          </>
+        )}
+        {/* social links */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="LinkedIn" className="block text-sm font-medium">
@@ -335,7 +352,7 @@ const AddMemberForm: React.FC<Props> = ({
 
         <div className="flex items-center gap-2">
           <button type="submit" className="btn btn-primary">
-            Add Member
+            {initialValues ? "Update Member" : "Add Member"}
           </button>
           <button type="button" className="btn" onClick={() => reset()}>
             Reset
