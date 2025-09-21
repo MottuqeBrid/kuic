@@ -15,6 +15,7 @@ type FormValues = {
   JoinDate?: string;
   EndDate?: string | null;
   Status?: string;
+  TimeLine?: string;
   Position?: string;
   Bio?: string;
   SocialMedia?: Record<string, string>;
@@ -36,11 +37,23 @@ const AddMemberForm: React.FC<Props> = ({
   fetchMembers,
   initialValues = null,
 }) => {
+  const formatDateForInput = (dateString?: string | null): string => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "";
+      return date.toISOString().slice(0, 10);
+    } catch {
+      return "";
+    }
+  };
+
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm<FormValues>({
     defaultValues: {
       FullName: initialValues?.FullName || "",
@@ -50,9 +63,11 @@ const AddMemberForm: React.FC<Props> = ({
       Email: initialValues?.Email || "",
       PhoneNumber: initialValues?.PhoneNumber || "",
       PhotoURL: initialValues?.PhotoURL || "",
+      TimeLine: initialValues?.TimeLine || "",
       JoinDate:
-        initialValues?.JoinDate || new Date().toISOString().slice(0, 10),
-      EndDate: initialValues?.EndDate || "",
+        formatDateForInput(initialValues?.JoinDate) ||
+        new Date().toISOString().slice(0, 10),
+      EndDate: formatDateForInput(initialValues?.EndDate),
       Status: initialValues?.Status || "Active",
       Position: initialValues?.Position || "Member",
       Bio: initialValues?.Bio || "",
@@ -83,6 +98,7 @@ const AddMemberForm: React.FC<Props> = ({
       Discipline: data.Discipline || "",
       YearBatch: data.YearBatch || "",
       Email: data.Email,
+      TimeLine: data.TimeLine || undefined,
       PhoneNumber: data.PhoneNumber || undefined,
       PhotoURL: data.PhotoURL || undefined,
       JoinDate: data.JoinDate || undefined,
@@ -158,6 +174,8 @@ const AddMemberForm: React.FC<Props> = ({
   });
 
   console.log(initialValues);
+
+  const status = watch("Status");
 
   return (
     <div className="overflow-y-auto max-h-[80vh] pr-2">
@@ -250,6 +268,20 @@ const AddMemberForm: React.FC<Props> = ({
               className="input w-full"
             />
           </div>
+
+          {/* start date */}
+          <div>
+            <label htmlFor="JoinDate" className="block text-sm font-medium">
+              Start Date
+            </label>
+            <input
+              {...register("JoinDate")}
+              id="JoinDate"
+              type="date"
+              className="input w-full"
+            />
+          </div>
+
           {/* year */}
           <div>
             <label htmlFor="YearBatch" className="block text-sm font-medium">
@@ -291,6 +323,42 @@ const AddMemberForm: React.FC<Props> = ({
                 <option value="Ex-Member">Ex-Member</option>
               </select>
             </div>
+            <div className="col-span-2">
+              <label htmlFor="EndDate" className="block text-sm font-medium">
+                End Date
+              </label>
+              <input
+                {...register("EndDate")}
+                id="EndDate"
+                type="date"
+                className="input w-full"
+              />
+            </div>
+            {/* TimeLine */}
+            {status === "Ex-Member" && (
+              <div>
+                <label htmlFor="TimeLine" className="block text-sm font-medium">
+                  Time Intervale
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: 2019-2021"
+                  {...register("TimeLine")}
+                  id="TimeLine"
+                  className="input w-full"
+                />
+              </div>
+            )}
+            {/* <div>
+              <label htmlFor="TimeLine" className="block text-sm font-medium">
+                Time Intervale
+              </label>
+              <input
+                {...register("TimeLine")}
+                id="TimeLine"
+                className="input w-full"
+              />
+            </div> */}
           </>
         )}
         {/* social links */}
