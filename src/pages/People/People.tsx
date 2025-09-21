@@ -136,35 +136,68 @@ const People: React.FC = () => {
 
   const renderSocialLinks = (sm?: Record<string, unknown>, name?: string) => {
     if (!sm) return null;
-    console.log(sm);
+
+    // Prioritize URL fields and valid URLs
+    const urlFields = ["PersonalWebsite", "Website"];
+    const socialFields = ["LinkedIn", "Twitter", "Facebook", "Instagram"];
+
+    const validLinks: Array<[string, string]> = [];
+    const textEntries: Array<[string, unknown]> = [];
+
+    Object.entries(sm).forEach(([k, v]) => {
+      const href = typeof v === "string" ? v.trim() : "";
+
+      // Always treat URL fields as links if they're valid URLs
+      if (
+        urlFields.some((field) => k.toLowerCase().includes(field.toLowerCase()))
+      ) {
+        if (href && isValidUrl(href)) {
+          validLinks.push([k, href]);
+        } else if (href) {
+          textEntries.push([k, v]);
+        }
+      }
+      // For social fields, only show as links if they're valid URLs
+      else if (
+        socialFields.some((field) =>
+          k.toLowerCase().includes(field.toLowerCase())
+        )
+      ) {
+        if (href && isValidUrl(href)) {
+          validLinks.push([k, href]);
+        }
+        // Don't show social fields as text if they're not URLs
+      }
+      // Other fields as text
+      else {
+        textEntries.push([k, v]);
+      }
+    });
+
     return (
       <div className="flex flex-wrap gap-2">
-        {Object.entries(sm)
-          .slice(0, 4)
-          .map(([k, v]) => {
-            const href = typeof v === "string" ? v : undefined;
-            if (href && isValidUrl(href)) {
-              return (
-                <a
-                  key={k}
-                  href={href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="link link-primary flex items-center gap-2"
-                  aria-label={`Open ${name ?? "member"}'s ${k}`}
-                >
-                  {renderSocialIcon(k)}
-                  <span className="not-sr-only">{k}</span>
-                </a>
-              );
-            }
-            return (
-              <div key={k} className="text-xs text-muted">
-                <span className="font-semibold mr-1">{k}:</span>
-                <span>{String(v)}</span>
-              </div>
-            );
-          })}
+        {/* Render valid links first */}
+        {validLinks.map(([k, href]) => (
+          <a
+            key={k}
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="link link-primary flex items-center gap-2"
+            aria-label={`Open ${name ?? "member"}'s ${k}`}
+          >
+            {renderSocialIcon(k)}
+            <span className="not-sr-only">{k}</span>
+          </a>
+        ))}
+
+        {/* Render text entries */}
+        {textEntries.slice(0, 2).map(([k, v]) => (
+          <div key={k} className="text-xs text-muted">
+            <span className="font-semibold mr-1">{k}:</span>
+            <span>{String(v)}</span>
+          </div>
+        ))}
       </div>
     );
   };
