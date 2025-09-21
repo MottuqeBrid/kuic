@@ -1,10 +1,32 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
-import PEOPLE from "../../data/people";
-import type { Member } from "../../data/people";
-import { FaInstagram } from "react-icons/fa";
+import {
+  FaInstagram,
+  FaLinkedin,
+  FaTwitter,
+  FaFacebook,
+  FaGlobe,
+} from "react-icons/fa";
+import { format } from "date-fns";
+import axiosInstance from "../../hooks/axiosInstance";
+interface Member {
+  FullName: string;
+  Email?: string;
+  Position?: string;
+  YearBatch?: string;
+  Discipline?: string;
+  Status?: string;
+  PhotoURL?: string;
+  Bio?: string;
+  SocialMedia?: Record<string, unknown>;
+  _id?: string;
+  JoinDate?: string;
+  PhoneNumber?: string;
+}
 
 const fallbackPhoto = "/kuic.jpg";
+
+const leaderPositions = ["President", "Vice President", "Treasurer"];
 
 function statusClass(status?: string) {
   switch ((status || "").toLowerCase()) {
@@ -22,100 +44,130 @@ function statusClass(status?: string) {
 const People: React.FC = () => {
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("All");
-  // Use the local PEOPLE dataset. If you want remote fetching, replace this with a fetch + setPeople.
-  const [people] = useState<Member[]>(PEOPLE);
+  const [people, setPeople] = useState<Member[]>([]);
+  // derived filtered members (no local state)
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const departments = useMemo(() => {
+  const leaders = useMemo(
+    () =>
+      leaderPositions.map((pos: string) =>
+        people.find((p) => p?.Position?.toLowerCase() === pos.toLowerCase())
+      ),
+    [people]
+  );
+
+  const leaderIds = useMemo(() => {
     const s = new Set<string>();
-    people.forEach((p) => s.add(p.Department || "Unknown"));
-    return ["All", ...Array.from(s).sort()];
-  }, [people]);
+    for (const l of leaders) if (l && l._id) s.add(l._id);
+    return s;
+  }, [leaders]);
 
-  const filtered = useMemo(() => {
+  const filteredMembers = useMemo(() => {
     const ql = q.trim().toLowerCase();
     return people.filter((p) => {
-      if (dept !== "All" && p.Department !== dept) return false;
+      if (dept !== "All" && p.Discipline !== dept) return false;
+      if (p._id && leaderIds.has(p._id)) return false;
       if (!ql) return true;
-      return (
-        p.FullName.toLowerCase().includes(ql) ||
-        (p.Position || "").toLowerCase().includes(ql) ||
-        (p.SkillsExpertise || []).some((s) => s.toLowerCase().includes(ql))
-      );
+      return p.FullName?.toLowerCase().includes(ql) || false;
     });
-  }, [q, dept, people]);
+  }, [people, q, dept, leaderIds]);
+  const fetchMember = async () => {
+    try {
+      setLoading(true);
+      setFetchError(null);
+      const response = await axiosInstance.get("/members/getMembers");
+      const data = response.data?.members || response.data || [];
+      setPeople(Array.isArray(data) ? (data as Member[]) : []);
+      console.log(data);
+    } catch (error: unknown) {
+      console.error("Error fetching members:", error);
+      setFetchError(String(error ?? "Failed to load members"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMember();
+  }, []);
+
+  const disciplines = useMemo(() => {
+    const s = new Set<string>();
+    people.forEach((p) => s.add(p.Discipline || "Unknown"));
+    return ["All", ...Array.from(s).sort()];
+  }, [people]);
 
   function formatDate(d?: string) {
     if (!d) return "—";
     try {
       const dt = new Date(d);
-      return dt.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
+      if (isNaN(dt.getTime())) return d;
+      return format(dt, "MMM d, yyyy");
     } catch {
       return d;
     }
   }
 
   function renderSocialIcon(key: string) {
-    // minimal inline icons
     switch (key.toLowerCase()) {
       case "linkedin":
-        return (
-          <svg
-            className="w-4 h-4 inline-block"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden
-          >
-            <path d="M4.98 3.5C4.98 4.88 3.88 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1 4.98 2.12 4.98 3.5zM0 8h5v16H0zM8 8h4.8v2.3h.1c.7-1.3 2.4-2.6 4.9-2.6C23.6 7.7 24 11 24 15.3V24h-5v-7.3c0-1.8 0-4.1-2.5-4.1S14 15 14 17.9V24H9V8z" />
-          </svg>
-        );
+        return <FaLinkedin className="w-4 h-4 inline-block" />;
       case "twitter":
-        return (
-          <svg
-            className="w-4 h-4 inline-block"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden
-          >
-            <path d="M24 4.6c-.9.4-1.9.7-3 .8 1-0.6 1.8-1.6 2.1-2.7-.9.6-2 .9-3.1 1.2C19.4 2 18.1 1.4 16.7 1.4c-2.6 0-4.6 2.3-4 4.8C8 6 4.5 4 2.2 1.2c-.3.6-.5 1.2-.5 1.9 0 1.6.8 3 2 3.8-.7 0-1.4-.2-2-.6v.1c0 2.3 1.6 4.3 3.7 4.8-.4.1-.8.2-1.2.2-.3 0-.6 0-.8-.1.6 2 2.4 3.4 4.6 3.4C6.9 19.4 3.7 20.7.9 20c2.3 1.5 5 2.4 7.9 2.4 9.4 0 14.5-7.8 14.5-14.5v-.7C22.6 6.6 23.4 5.7 24 4.6z" />
-          </svg>
-        );
+        return <FaTwitter className="w-4 h-4 inline-block" />;
       case "facebook":
-        return (
-          <svg
-            className="w-4 h-4 inline-block"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden
-          >
-            <path d="M22 0H2C.9 0 0 .9 0 2v20c0 1.1.9 2 2 2h10.7V14.7H9.7V11h3V8.4c0-3 1.8-4.7 4.5-4.7 1.3 0 2.4.1 2.7.1v3h-1.8c-1.4 0-1.7.7-1.7 1.6V11h3.4l-.4 3.7h-3v9.3H22c1.1 0 2-.9 2-2V2c0-1.1-.9-2-2-2z" />
-          </svg>
-        );
+        return <FaFacebook className="w-4 h-4 inline-block" />;
       case "instagram":
-        return <FaInstagram />;
+        return <FaInstagram className="w-4 h-4 inline-block" />;
       default:
-        return (
-          <svg
-            className="w-4 h-4 inline-block"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden
-          >
-            <path d="M3.9 12c0-4.5 3.6-8.1 8.1-8.1s8.1 3.6 8.1 8.1-3.6 8.1-8.1 8.1S3.9 16.5 3.9 12zm11.1-1.8h-2.4v6h-2.4v-6H8.1V8.4h4.5V6.9c0-1.2.6-2.4 2.4-2.4h1.8v2.4h-1.2c-.3 0-.6.3-.6.6v1.5h1.8l-.3 1.8z" />
-          </svg>
-        );
+        return <FaGlobe className="w-4 h-4 inline-block" />;
     }
   }
 
-  // Precompute leaders so we can both show them prominently and exclude them from the main list
-  const leaderPositions = ["President", "Vice President", "Treasurer"];
-  const leaders = leaderPositions.map((pos) =>
-    people.find((p) => (p.Position || "").toLowerCase() === pos.toLowerCase())
-  );
-  const leaderIds = new Set(leaders.filter(Boolean).map((l) => l!.MemberID));
+  const isValidUrl = (s?: string) => {
+    if (!s) return false;
+    try {
+      const url = new URL(s);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+
+  const renderSocialLinks = (sm?: Record<string, unknown>, name?: string) => {
+    if (!sm) return null;
+    console.log(sm);
+    return (
+      <div className="flex flex-wrap gap-2">
+        {Object.entries(sm)
+          .slice(0, 4)
+          .map(([k, v]) => {
+            const href = typeof v === "string" ? v : undefined;
+            if (href && isValidUrl(href)) {
+              return (
+                <a
+                  key={k}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="link link-primary flex items-center gap-2"
+                  aria-label={`Open ${name ?? "member"}'s ${k}`}
+                >
+                  {renderSocialIcon(k)}
+                  <span className="not-sr-only">{k}</span>
+                </a>
+              );
+            }
+            return (
+              <div key={k} className="text-xs text-muted">
+                <span className="font-semibold mr-1">{k}:</span>
+                <span>{String(v)}</span>
+              </div>
+            );
+          })}
+      </div>
+    );
+  };
 
   return (
     <section className="py-12">
@@ -125,6 +177,12 @@ const People: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
+          {loading && <div className="py-8 text-center">Loading members…</div>}
+          {fetchError && (
+            <div className="py-4 text-center text-error">
+              Error: {fetchError}
+            </div>
+          )}
           <h2 className="text-3xl font-bold mb-2">Our Team</h2>
           <p className="text-base-content/70 mb-6">
             Meet the students and mentors that power KUIC.
@@ -138,13 +196,14 @@ const People: React.FC = () => {
             {leaders.map((leader, idx) =>
               leader ? (
                 <div
-                  key={leader.MemberID}
+                  key={idx}
                   className="card bg-gradient-to-r from-primary/10 to-base-200 p-4 flex items-center gap-4 border-l-4 border-primary"
                 >
                   <img
                     src={leader.PhotoURL || fallbackPhoto}
                     alt={leader.FullName}
                     className="w-24 h-24 rounded-full object-cover ring-2 ring-primary"
+                    loading="lazy"
                     onError={(e) =>
                       ((e.target as HTMLImageElement).src = fallbackPhoto)
                     }
@@ -156,7 +215,7 @@ const People: React.FC = () => {
                           {leader.FullName}
                         </div>
                         <div className="text-sm text-muted">
-                          {leader.Position} — {leader.Department}
+                          {leader.Position} — {leader.Discipline}
                         </div>
                       </div>
                       <div>
@@ -169,23 +228,7 @@ const People: React.FC = () => {
                       {leader.Bio}
                     </div>
                     <div className="mt-3 flex items-center flex-wrap gap-3 text-sm">
-                      {leader.SocialMedia &&
-                        Object.entries(leader.SocialMedia)
-                          .slice(0, 4)
-                          .map(([k, v]) => (
-                            <a
-                              key={k}
-                              href={v}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="link link-primary flex items-center gap-2"
-                              aria-label={`Open ${leader.FullName}'s ${k}`}
-                            >
-                              {renderSocialIcon(k)}
-                              <span className="sr-only">{k}</span>
-                              <span className="hidden sm:inline">{k}</span>
-                            </a>
-                          ))}
+                      {renderSocialLinks(leader.SocialMedia, leader.FullName)}
                     </div>
                   </div>
                 </div>
@@ -208,7 +251,7 @@ const People: React.FC = () => {
             <input
               aria-label="Search members"
               className="input input-bordered w-full"
-              placeholder="Search by name, skill or role..."
+              placeholder="Search by name..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
@@ -220,7 +263,7 @@ const People: React.FC = () => {
               value={dept}
               onChange={(e) => setDept(e.target.value)}
             >
-              {departments.map((d) => (
+              {disciplines.map((d) => (
                 <option key={d} value={d}>
                   {d}
                 </option>
@@ -230,82 +273,75 @@ const People: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered
-            .filter((m) => !leaderIds.has(m.MemberID))
-            .map((m: Member) => (
-              <article
-                key={m.MemberID}
-                className="card bg-base-100 shadow hover:shadow-lg transition"
-              >
-                <div className="flex flex-col gap-4 p-4">
-                  <img
-                    src={m.PhotoURL || fallbackPhoto}
-                    alt={m.FullName}
-                    className="w-20 h-20 rounded-lg object-cover"
-                    onError={(e) =>
-                      ((e.target as HTMLImageElement).src = fallbackPhoto)
-                    }
-                  />
+          {filteredMembers.map((m: Member) => (
+            <article
+              key={m._id}
+              className="card bg-base-100 shadow hover:shadow-lg transition"
+            >
+              <div className="flex flex-col gap-4 p-4">
+                <img
+                  src={m.PhotoURL || fallbackPhoto}
+                  alt={`${m.FullName} — ${m.Position || "Member"}`}
+                  className="w-20 h-20 rounded-lg object-cover"
+                  loading="lazy"
+                  onError={(e) =>
+                    ((e.target as HTMLImageElement).src = fallbackPhoto)
+                  }
+                />
 
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="text-lg font-semibold">{m.FullName}</h3>
-                        <p className="text-sm text-muted">
-                          {m.Position} — {m.Department}
-                        </p>
-                      </div>
-                      <div>
-                        <span className={statusClass(m?.Status)}>
-                          {m?.Status || "Unknown"}
-                        </span>
-                      </div>
+                <div className="flex-1">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-lg font-semibold">{m.FullName}</h3>
+                      <p className="text-sm text-muted">
+                        {m.Position} — {m.Discipline}
+                      </p>
                     </div>
-
-                    <p className="mt-2 text-sm text-base-content/75 line-clamp-3">
-                      {m.Bio}
-                    </p>
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {(m.SkillsExpertise || []).slice(0, 6).map((s) => (
-                        <span key={s} className="badge badge-outline">
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="mt-3 flex items-center flex-wrap gap-3 text-sm">
-                      {m.SocialMedia &&
-                        Object.entries(m.SocialMedia)
-                          .slice(0, 4)
-                          .map(([k, v]) => (
-                            <a
-                              key={k}
-                              href={v}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="link link-primary flex items-center gap-2"
-                              aria-label={`Open ${m.FullName}'s ${k}`}
-                            >
-                              {renderSocialIcon(k)}
-                              <span className="sr-only">{k}</span>
-                              <span className="hidden sm:inline">{k}</span>
-                            </a>
-                          ))}
+                    <div>
+                      <span className={statusClass(m?.Status)}>
+                        {m?.Status || "Unknown"}
+                      </span>
                     </div>
                   </div>
-                </div>
 
-                <div className="card-actions p-4 pt-0">
-                  <div className="flex items-center justify-end w-full text-xs text-muted">
-                    <div>Joined: {formatDate(m.JoinDate)}</div>
+                  <p className="mt-2 text-sm text-base-content/75 line-clamp-3">
+                    {m.Bio}
+                  </p>
+                  {/* Email */}
+                  <div className="mt-3 flex items-center flex-wrap gap-3 text-sm">
+                    {m.Email && (
+                      <a
+                        href={`mailto:${m.Email}`}
+                        className="link link-hover mr-3 text-sm"
+                      >
+                        {m.Email}
+                      </a>
+                    )}
+                    {m.PhoneNumber && (
+                      <a
+                        href={`tel:${m.PhoneNumber}`}
+                        className="link link-hover mr-3 text-sm"
+                      >
+                        {m.PhoneNumber}
+                      </a>
+                    )}
+                    {/* Social links */}
+                    {(m.SocialMedia as Record<string, unknown>) &&
+                      renderSocialLinks(m.SocialMedia, m.FullName)}
                   </div>
                 </div>
-              </article>
-            ))}
+              </div>
+
+              <div className="card-actions p-4 pt-0">
+                <div className="flex items-center justify-end w-full text-xs text-muted">
+                  <div>Joined: {formatDate(m.JoinDate)}</div>
+                </div>
+              </div>
+            </article>
+          ))}
         </div>
 
-        {filtered.length === 0 && (
+        {filteredMembers.length === 0 && (
           <div className="mt-8 text-center text-muted">
             No members match your search.
           </div>

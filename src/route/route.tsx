@@ -11,7 +11,6 @@ import People from "../pages/People/People";
 import Blog from "../pages/Blog/Blog";
 import AdminLayout from "../layouts/AdminLayout/AdminLayout";
 import Dashboard from "../pages/Dashboard/Dashboard";
-import AddMemberForm from "../components/Admin/Members/AddMemberForm";
 
 const router = createBrowserRouter([
   {
@@ -55,10 +54,6 @@ const router = createBrowserRouter([
       {
         index: true,
         Component: Dashboard,
-      },
-      {
-        path: "add-member",
-        element: <AddMemberForm />,
       },
     ],
   },

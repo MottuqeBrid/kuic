@@ -1,9 +1,10 @@
 import React from "react";
 import { useForm } from "react-hook-form";
-import type { Member } from "../../../data/people";
+import axiosInstance from "../../../hooks/axiosInstance";
+import Swal from "sweetalert2";
 
 type FormValues = {
-  MemberID?: string;
+  _id?: string;
   FullName: string;
   StudentID?: string;
   Discipline?: string;
@@ -11,15 +12,12 @@ type FormValues = {
   Email: string;
   PhoneNumber?: string;
   PhotoURL?: string;
-  MembershipType?: string;
   JoinDate?: string;
   EndDate?: string | null;
   Status?: string;
   Position?: string;
-  SkillsExpertise?: string;
-  ProjectsInvolved?: string;
-  EventParticipationCount?: number;
   Bio?: string;
+  SocialMedia?: Record<string, string>;
   LinkedIn?: string;
   Twitter?: string;
   Facebook?: string;
@@ -28,10 +26,16 @@ type FormValues = {
 };
 
 type Props = {
-  onAdd?: (m: Member) => void;
+  fetchMembers?: () => void;
+  onSuccess?: () => void;
+  initialValues?: Partial<FormValues> | null;
 };
 
-const AddMemberForm: React.FC<Props> = ({ onAdd }) => {
+const AddMemberForm: React.FC<Props> = ({
+  onSuccess,
+  fetchMembers,
+  initialValues = null,
+}) => {
   const {
     register,
     handleSubmit,
@@ -39,27 +43,24 @@ const AddMemberForm: React.FC<Props> = ({ onAdd }) => {
     reset,
   } = useForm<FormValues>({
     defaultValues: {
-      FullName: "",
-      StudentID: "",
-      Discipline: "",
-      YearBatch: "",
-      Email: "",
-      PhoneNumber: "",
-      PhotoURL: "",
-      MembershipType: "General",
-      JoinDate: new Date().toISOString().slice(0, 10),
-      EndDate: "",
-      Status: "Active",
-      Position: "Member",
-      SkillsExpertise: "",
-      ProjectsInvolved: "",
-      EventParticipationCount: 0,
-      Bio: "",
-      LinkedIn: "",
-      Twitter: "",
-      Facebook: "",
-      Instagram: "",
-      PersonalWebsite: "",
+      FullName: initialValues?.FullName || "",
+      StudentID: initialValues?.StudentID || "",
+      Discipline: initialValues?.Discipline || "",
+      YearBatch: initialValues?.YearBatch || "",
+      Email: initialValues?.Email || "",
+      PhoneNumber: initialValues?.PhoneNumber || "",
+      PhotoURL: initialValues?.PhotoURL || "",
+      JoinDate:
+        initialValues?.JoinDate || new Date().toISOString().slice(0, 10),
+      EndDate: initialValues?.EndDate || "",
+      Status: initialValues?.Status || "Active",
+      Position: initialValues?.Position || "Member",
+      Bio: initialValues?.Bio || "",
+      LinkedIn: initialValues?.SocialMedia?.LinkedIn || "",
+      Twitter: initialValues?.SocialMedia?.Twitter || "",
+      Facebook: initialValues?.SocialMedia?.Facebook || "",
+      Instagram: initialValues?.SocialMedia?.Instagram || "",
+      PersonalWebsite: initialValues?.SocialMedia?.PersonalWebsite || "",
     },
   });
 
@@ -76,32 +77,18 @@ const AddMemberForm: React.FC<Props> = ({ onAdd }) => {
     "Music",
   ];
 
-  const onSubmit = handleSubmit((data) => {
-    const now = new Date().toISOString();
-    const member: Member = {
-      MemberID:
-        data.MemberID || `KUIC-2025-${Math.floor(Math.random() * 900 + 100)}`,
+  const onSubmit = handleSubmit(async (data) => {
+    const member: FormValues = {
       FullName: data.FullName,
-      StudentID: data.StudentID || "",
       Discipline: data.Discipline || "",
       YearBatch: data.YearBatch || "",
       Email: data.Email,
       PhoneNumber: data.PhoneNumber || undefined,
       PhotoURL: data.PhotoURL || undefined,
-      MembershipType: data.MembershipType || "General",
       JoinDate: data.JoinDate || undefined,
       EndDate: data.EndDate || null,
       Status: data.Status || "Active",
       Position: data.Position || "Member",
-      SkillsExpertise: (data.SkillsExpertise || "")
-        .split(",")
-        .map((s: string) => s.trim())
-        .filter(Boolean),
-      ProjectsInvolved: (data.ProjectsInvolved || "")
-        .split(",")
-        .map((s: string) => s.trim())
-        .filter(Boolean),
-      EventParticipationCount: Number(data.EventParticipationCount) || 0,
       Bio: data.Bio || "",
       SocialMedia: {
         ...(data.LinkedIn ? { LinkedIn: data.LinkedIn } : {}),
@@ -112,19 +99,72 @@ const AddMemberForm: React.FC<Props> = ({ onAdd }) => {
           ? { PersonalWebsite: data.PersonalWebsite }
           : {}),
       },
-      CreatedAt: now,
-      UpdatedAt: now,
     };
 
-    if (onAdd) onAdd(member);
-    else console.log("New member:", member);
-
-    reset();
+    try {
+      // If initialValues provided, treat as edit -> PATCH
+      if (initialValues && initialValues._id) {
+        const res = await axiosInstance.patch(
+          `/members/updateMember/${initialValues._id}`,
+          member
+        );
+        if (res.data.success) {
+          Swal.fire({
+            icon: "success",
+            title: "Member updated",
+            text: `${member.FullName} updated.`,
+          });
+          if (onSuccess) onSuccess();
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: res.data.message || "Failed to update member.",
+          });
+        }
+      } else {
+        const res = await axiosInstance.post("/members/addMember", member);
+        if (res.data.success) {
+          Swal.fire({
+            icon: "success",
+            title: "Member added",
+            text: `${member.FullName} has been added successfully.`,
+          });
+          if (onSuccess) onSuccess();
+          if (fetchMembers) fetchMembers();
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: res.data.message || "Failed to add member.",
+          });
+        }
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+          ? error
+          : "An unexpected error occurred.";
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: message,
+      });
+    } finally {
+      reset();
+    }
   });
 
   return (
-    <div>
-      <h2 className="text-2xl mb-4">Add New Member</h2>
+    <div className="overflow-y-auto max-h-[80vh] pr-2">
+      {/* <div className="flex justify-between items-center mt-6">
+        <h2 className="text-2xl mb-4">Add New Member</h2>
+        <Link to="/admin" className="btn btnLink">
+          Back to members
+        </Link>
+      </div> */}
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <label htmlFor="FullName" className="block text-sm font-medium">
@@ -185,7 +225,7 @@ const AddMemberForm: React.FC<Props> = ({ onAdd }) => {
               className="select w-full"
               {...register("Position")}
             >
-              <option value="Member">Member</option>
+              <option value="General">General</option>
               <option value="President">President</option>
               <option value="Vice President">Vice President</option>
               <option value="Treasurer">Treasurer</option>
@@ -213,35 +253,6 @@ const AddMemberForm: React.FC<Props> = ({ onAdd }) => {
               className="input w-full"
             />
           </div>
-
-          <div>
-            <label
-              htmlFor="SkillsExpertise"
-              className="block text-sm font-medium"
-            >
-              Skills (comma separated)
-            </label>
-            <input
-              {...register("SkillsExpertise")}
-              id="SkillsExpertise"
-              className="input w-full"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="ProjectsInvolved"
-              className="block text-sm font-medium"
-            >
-              Projects (comma separated)
-            </label>
-            <input
-              {...register("ProjectsInvolved")}
-              id="ProjectsInvolved"
-              className="input w-full"
-            />
-          </div>
-
           <div>
             <label htmlFor="YearBatch" className="block text-sm font-medium">
               Year / Batch
