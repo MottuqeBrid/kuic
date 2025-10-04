@@ -5,6 +5,7 @@ import Members from "../Admin/Members/Members";
 import EventsForm from "../Admin/EventsForm/EventsForm";
 import AllDashbordEvents from "../Admin/AllDashbordEvents/AllDashbordEvents";
 import AdminFAQs from "../Admin/AdminFAQs/AdminFAQs";
+import AdminGallery from "../Admin/AdminGallery/AdminGallery";
 
 const TABS = [
   "People",
@@ -171,14 +172,16 @@ const DashboardNavbar: React.FC = () => {
           {TABS[activeIndex] === "Hero content" && <HeroContent />}
           {TABS[activeIndex] === "Upcoming Events" && <EventsForm />}
           {TABS[activeIndex] === "Events" && <AllDashbordEvents />}
-          {TABS[activeIndex] === "FAQs" && <AdminFAQs />}
           {/* Fallback simple content for other sections while expanding panels */}
+          {TABS[activeIndex] === "FAQs" && <AdminFAQs />}
+          {TABS[activeIndex] === "Gallery" && <AdminGallery />}
           {![
             "People",
             "Hero content",
             "Upcoming Events",
             "Events",
             "FAQs",
+            "Gallery",
           ].includes(TABS[activeIndex]) && (
             <div>
               <h3 className="text-lg font-semibold">{TABS[activeIndex]}</h3>
