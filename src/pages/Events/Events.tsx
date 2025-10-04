@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
   FaCalendarAlt,
@@ -7,8 +7,19 @@ import {
   FaArrowRight,
 } from "react-icons/fa";
 import { motion } from "motion/react";
-import { DEMO_EVENTS } from "../../data/events";
-import type { EventItem } from "../../data/events";
+import axiosInstance from "../../hooks/axiosInstance";
+
+interface EventItem {
+  _id: string;
+  title: string;
+  short_dec: string;
+  date: string;
+  time: string;
+  location: string;
+  category: string;
+  image: string;
+  status?: string;
+}
 
 const categories = [
   "All",
@@ -19,8 +30,17 @@ const categories = [
 ];
 
 const Events = () => {
+  const [events, setEvents] = useState<EventItem[]>([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
+
+  const fetchEvents = async () => {
+    const res = await axiosInstance.get("/events/getEvents");
+    setEvents(res?.data?.events || []);
+  };
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   const formatDate = (dateStr: string) => {
     try {
@@ -38,7 +58,7 @@ const Events = () => {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return DEMO_EVENTS.filter((e: EventItem) => {
+    return events.filter((e: EventItem) => {
       const matchesCategory = category === "All" || e.category === category;
       const matchesSearch =
         !q ||
@@ -46,7 +66,7 @@ const Events = () => {
         (e.short_dec || "").toLowerCase().includes(q);
       return matchesCategory && matchesSearch;
     });
-  }, [search, category]);
+  }, [search, category, events]);
 
   return (
     <section className="py-12 sm:py-16 bg-base-100">
@@ -106,7 +126,7 @@ const Events = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((ev, idx) => (
             <motion.article
-              key={ev.id}
+              key={ev._id}
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -170,7 +190,7 @@ const Events = () => {
 
                 <div className="mt-4 flex items-center justify-between">
                   <Link
-                    to={`/events/${ev.id}`}
+                    to={`/events/${ev._id}`}
                     className="inline-flex items-center gap-2 text-sm btn btn-outline"
                   >
                     View Details

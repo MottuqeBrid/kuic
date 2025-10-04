@@ -11,6 +11,7 @@ import People from "../pages/People/People";
 import Blog from "../pages/Blog/Blog";
 import AdminLayout from "../layouts/AdminLayout/AdminLayout";
 import Dashboard from "../pages/Dashboard/Dashboard";
+import EventsForm from "../components/Admin/EventsForm/EventsForm";
 
 const router = createBrowserRouter([
   {
@@ -54,6 +55,10 @@ const router = createBrowserRouter([
       {
         index: true,
         Component: Dashboard,
+      },
+      {
+        path: "update-event/:id",
+        element: <EventsForm />,
       },
     ],
   },

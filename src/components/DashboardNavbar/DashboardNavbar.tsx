@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router";
 import HeroContent from "../Admin/HeroContent/HeroContent";
 import Members from "../Admin/Members/Members";
+import EventsForm from "../Admin/EventsForm/EventsForm";
+import AllDashbordEvents from "../Admin/AllDashbordEvents/AllDashbordEvents";
+import AdminFAQs from "../Admin/AdminFAQs/AdminFAQs";
 
 const TABS = [
   "People",
@@ -13,12 +17,57 @@ const TABS = [
   "Events",
 ];
 
+// URL query format examples:
+// ?tab=people
+// ?tab=hero-content
+// ?tab=upcoming-events
+// ?tab=messages
+// ?tab=faqs
+// ?tab=core-areas
+// ?tab=gallery
+// ?tab=events
+
 const DashboardNavbar: React.FC = () => {
-  // store index instead of string to make keyboard navigation simpler
-  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [searchParams, setSearchParams] = useSearchParams();
   const tabsRef = useRef<Array<HTMLButtonElement | null>>(
     []
   ) as React.MutableRefObject<Array<HTMLButtonElement | null>>;
+
+  // Get initial active index from URL query parameter or default to 0
+  const getInitialActiveIndex = (): number => {
+    const tabQuery = searchParams.get("tab");
+    if (tabQuery) {
+      const index = TABS.findIndex(
+        (tab) =>
+          tab.toLowerCase().replace(/\s+/g, "-") === tabQuery.toLowerCase()
+      );
+      return index !== -1 ? index : 0;
+    }
+    return 0;
+  };
+
+  const [activeIndex, setActiveIndex] = useState<number>(getInitialActiveIndex);
+
+  // Convert tab name to URL-friendly format
+  const getTabSlug = (tabName: string): string => {
+    return tabName.toLowerCase().replace(/\s+/g, "-");
+  };
+
+  // Update URL when active index changes
+  const updateActiveIndex = (index: number) => {
+    setActiveIndex(index);
+    const tabSlug = getTabSlug(TABS[index]);
+    setSearchParams({ tab: tabSlug }, { replace: true });
+  };
+
+  useEffect(() => {
+    // Sync with URL on initial load and when URL changes
+    const newIndex = getInitialActiveIndex();
+    if (newIndex !== activeIndex) {
+      setActiveIndex(newIndex);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     // ensure there is always a focused tab element available after mount
@@ -34,20 +83,20 @@ const DashboardNavbar: React.FC = () => {
     const last = TABS.length - 1;
     if (e.key === "ArrowRight") {
       const next = index === last ? 0 : index + 1;
-      setActiveIndex(next);
+      updateActiveIndex(next);
       focusTab(next);
       e.preventDefault();
     } else if (e.key === "ArrowLeft") {
       const prev = index === 0 ? last : index - 1;
-      setActiveIndex(prev);
+      updateActiveIndex(prev);
       focusTab(prev);
       e.preventDefault();
     } else if (e.key === "Home") {
-      setActiveIndex(0);
+      updateActiveIndex(0);
       focusTab(0);
       e.preventDefault();
     } else if (e.key === "End") {
-      setActiveIndex(last);
+      updateActiveIndex(last);
       focusTab(last);
       e.preventDefault();
     }
@@ -64,7 +113,7 @@ const DashboardNavbar: React.FC = () => {
           id="dashboard-select"
           className="select w-full"
           value={activeIndex}
-          onChange={(e) => setActiveIndex(Number(e.target.value))}
+          onChange={(e) => updateActiveIndex(Number(e.target.value))}
           aria-label="Select dashboard panel"
         >
           {TABS.map((t, i) => (
@@ -100,7 +149,7 @@ const DashboardNavbar: React.FC = () => {
                   className={`px-4 py-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
                     isActive ? "font-medium" : ""
                   }`}
-                  onClick={() => setActiveIndex(i)}
+                  onClick={() => updateActiveIndex(i)}
                   onKeyDown={(e) => onKeyDown(e, i)}
                 >
                   {t}
@@ -120,8 +169,17 @@ const DashboardNavbar: React.FC = () => {
         >
           {TABS[activeIndex] === "People" && <Members />}
           {TABS[activeIndex] === "Hero content" && <HeroContent />}
+          {TABS[activeIndex] === "Upcoming Events" && <EventsForm />}
+          {TABS[activeIndex] === "Events" && <AllDashbordEvents />}
+          {TABS[activeIndex] === "FAQs" && <AdminFAQs />}
           {/* Fallback simple content for other sections while expanding panels */}
-          {!["People", "Hero content"].includes(TABS[activeIndex]) && (
+          {![
+            "People",
+            "Hero content",
+            "Upcoming Events",
+            "Events",
+            "FAQs",
+          ].includes(TABS[activeIndex]) && (
             <div>
               <h3 className="text-lg font-semibold">{TABS[activeIndex]}</h3>
               <div className="mt-3 text-sm text-base-content/70">

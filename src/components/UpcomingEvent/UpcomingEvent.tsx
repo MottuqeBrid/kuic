@@ -12,88 +12,68 @@ import {
   FaPhone,
   FaStar,
 } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import axiosInstance from "../../hooks/axiosInstance";
 
-// Demo data - replace with API data later
-const upcomingEvent = {
-  id: 1,
-  title: "Tech Innovation Summit 2024",
-  description:
-    "Join us for an exciting day of innovation, technology, and networking. This summit brings together industry leaders, students, and tech enthusiasts to explore the latest trends in technology and innovation.",
-  shortDescription:
-    "A comprehensive tech summit featuring industry leaders and cutting-edge innovations.",
-  date: "2024-03-15",
-  time: "09:00 AM - 05:00 PM",
-  location: "Khulna University Campus, Academic Building 1",
-  address: "Khulna University, Khulna-9208, Bangladesh",
-  image:
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQdGvNlLLu9WU1r3yMaMIvkEgjvC7dgGVyt6A&s",
-  category: "Technology",
-  status: "upcoming", // upcoming, ongoing, completed
-  maxAttendees: 200,
-  currentAttendees: 145,
-  price: "Free",
-  registrationDeadline: "2024-03-10",
-  organizer: "KUIC Executive Board",
-  contactEmail: "events@kuic.edu.bd",
-  contactPhone: "+880 123 456 789",
-  website: "https://kuic.edu.bd",
-  tags: ["Technology", "Innovation", "Networking", "Workshop"],
-  guests: [
-    {
-      id: 1,
-      name: "Dr. Sarah Ahmed",
-      title: "CTO at TechCorp Bangladesh",
-      bio: "Leading technology expert with 15+ years in software development and AI research.",
-      image: "/guest1.jpg",
-      social: {
-        linkedin: "https://linkedin.com/in/sarahahmed",
-        twitter: "https://twitter.com/sarahahmed",
-      },
-    },
-    {
-      id: 2,
-      name: "Prof. Mohammad Rahman",
-      title: "Head of Computer Science, KU",
-      bio: "Renowned professor specializing in machine learning and data science applications.",
-      image: "/guest2.jpg",
-      social: {
-        linkedin: "https://linkedin.com/in/mohammadrahman",
-        twitter: "https://twitter.com/profrahman",
-      },
-    },
-    {
-      id: 3,
-      name: "Ayesha Khan",
-      title: "Founder & CEO, InnovateBD",
-      bio: "Serial entrepreneur and startup mentor with expertise in fintech and e-commerce.",
-      image: "/guest3.jpg",
-      social: {
-        linkedin: "https://linkedin.com/in/ayeshakhan",
-        twitter: "https://twitter.com/ayeshakhan",
-      },
-    },
-  ],
-  agenda: [
-    { time: "09:00 AM", event: "Registration & Welcome Coffee" },
-    { time: "09:30 AM", event: "Opening Keynote by Dr. Sarah Ahmed" },
-    {
-      time: "10:30 AM",
-      event: "Panel Discussion: Future of AI in Bangladesh",
-    },
-    { time: "11:30 AM", event: "Coffee Break & Networking" },
-    {
-      time: "12:00 PM",
-      event: "Workshop: Building Scalable Web Applications",
-    },
-    { time: "01:00 PM", event: "Lunch Break" },
-    { time: "02:00 PM", event: "Startup Pitch Competition" },
-    { time: "03:30 PM", event: "Tech Exhibition & Demo Booths" },
-    { time: "04:30 PM", event: "Closing Remarks & Awards" },
-  ],
+// Utility function to convert 24-hour time to 12-hour format
+const formatTime12Hour = (time24: string): string => {
+  if (!time24) return "";
+
+  const [hours, minutes] = time24.split(":");
+  const hour = parseInt(hours, 10);
+  const minute = minutes || "00";
+
+  if (hour === 0) {
+    return `12:${minute} AM`;
+  } else if (hour < 12) {
+    return `${hour}:${minute} AM`;
+  } else if (hour === 12) {
+    return `12:${minute} PM`;
+  } else {
+    return `${hour - 12}:${minute} PM`;
+  }
 };
 
+interface Event {
+  _id: string;
+  title: string;
+  description: string;
+  location: string;
+  date: string;
+  time: string;
+  image: string;
+  category: string;
+  short_dec: string;
+  status: string;
+  maxAttendees: number;
+  currentAttendees: number;
+  price: string;
+  registrationDeadline: string;
+  organizer: string;
+  shortDescription: string;
+  contactEmail: string;
+  contactPhone: string;
+  website: string;
+  tags: string[];
+  guests: [{ name: string; title: string }] | null;
+  agenda: [];
+  regLink: string;
+  isPinned: boolean;
+}
 const UpcomingEvent = () => {
-  const formatDate = (dateString: string) => {
+  const [upcomingEvent, setUpcomingEvent] = useState<Event | null>(null);
+
+  const fetchEvent = async () => {
+    const data = await axiosInstance.get("/events/getEvents?isPinned=true");
+    setUpcomingEvent(data?.data?.events[0] || null);
+  };
+
+  useEffect(() => {
+    fetchEvent();
+  }, []);
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       weekday: "long",
@@ -103,8 +83,9 @@ const UpcomingEvent = () => {
     });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
+  const getStatusColor = (status?: string) => {
+    const s = status ?? "upcoming";
+    switch (s) {
       case "upcoming":
         return "text-primary bg-primary/10";
       case "ongoing":
@@ -116,8 +97,9 @@ const UpcomingEvent = () => {
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
+  const getStatusText = (status?: string) => {
+    const s = status ?? "upcoming";
+    switch (s) {
       case "upcoming":
         return "Upcoming";
       case "ongoing":
@@ -207,7 +189,7 @@ const UpcomingEvent = () => {
               <div className="flex items-center gap-3">
                 <FaClock className="text-primary w-5 h-5" />
                 <span className="text-base-content/70">
-                  {upcomingEvent?.time}
+                  {formatTime12Hour(upcomingEvent?.time || "")}
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -238,28 +220,30 @@ const UpcomingEvent = () => {
                 Guest Speakers
               </h4>
               <div className="flex flex-wrap gap-2">
-                {upcomingEvent?.guests.slice(0, 3).map((guest) => (
-                  <div
-                    key={guest.id}
-                    className="flex items-center gap-2 bg-base-100 rounded-lg p-2"
-                  >
-                    <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
-                      <FaUser className="text-primary text-sm" />
+                {(upcomingEvent?.guests ?? [])
+                  .slice(0, 3)
+                  .map((guest, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 bg-base-100 rounded-lg p-2"
+                    >
+                      <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                        <FaUser className="text-primary text-sm" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-base-content">
+                          {guest.name}
+                        </p>
+                        <p className="text-xs text-base-content/70">
+                          {guest.title}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-base-content">
-                        {guest.name}
-                      </p>
-                      <p className="text-xs text-base-content/70">
-                        {guest.title}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-                {upcomingEvent?.guests.length > 3 && (
+                  ))}
+                {(upcomingEvent?.guests ?? []).length > 3 && (
                   <div className="flex items-center gap-2 bg-base-100 rounded-lg p-2">
                     <span className="text-sm text-base-content/70">
-                      +{upcomingEvent?.guests.length - 3} more
+                      +{(upcomingEvent?.guests?.length ?? 0) - 3} more
                     </span>
                   </div>
                 )}
@@ -269,7 +253,7 @@ const UpcomingEvent = () => {
             {/* Tags */}
             <div className="mb-6">
               <div className="flex flex-wrap gap-2">
-                {upcomingEvent?.tags.map((tag, tagIndex) => (
+                {(upcomingEvent?.tags ?? []).map((tag, tagIndex) => (
                   <span
                     key={tagIndex}
                     className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium"
@@ -287,22 +271,28 @@ const UpcomingEvent = () => {
                 whileTap={{ scale: 0.98 }}
               >
                 <Link
-                  to={`/events/${upcomingEvent?.id}`}
+                  to={`/events/${upcomingEvent?._id}`}
                   className="flex-1 btn btn-primary gap-2"
                 >
                   View Details
                   <FaArrowRight />
                 </Link>
               </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <button className="flex-1 btn btn-outline gap-2">
-                  <FaTicketAlt />
-                  Register
-                </button>
-              </motion.div>
+              {upcomingEvent?.regLink && (
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Link
+                    target="_blank"
+                    to={upcomingEvent?.regLink}
+                    className="flex-1 btn btn-outline gap-2"
+                  >
+                    <FaTicketAlt />
+                    Register
+                  </Link>
+                </motion.div>
+              )}
             </div>
 
             {/* Contact Info */}
