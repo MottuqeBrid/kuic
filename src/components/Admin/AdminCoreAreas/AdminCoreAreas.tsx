@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import {
   FaPlus,
   FaEdit,
@@ -169,29 +169,42 @@ const AdminCoreAreas = () => {
     register,
     handleSubmit,
     reset,
-    control,
     formState: { errors, isSubmitting },
     watch,
     setValue,
   } = useForm<SegmentFormData>();
 
-  const {
-    fields: featureFields,
-    append: appendFeature,
-    remove: removeFeature,
-  } = useFieldArray({
-    control,
-    name: "features" as const,
-  });
+  // Manual state management for dynamic arrays instead of useFieldArray
+  const [features, setFeatures] = useState<string[]>([""]);
+  const [objectives, setObjectives] = useState<string[]>([""]);
 
-  const {
-    fields: objectiveFields,
-    append: appendObjective,
-    remove: removeObjective,
-  } = useFieldArray({
-    control,
-    name: "detailedInfo.objectives" as const,
-  });
+  const appendFeature = (value: string = "") => {
+    setFeatures((prev) => [...prev, value]);
+  };
+
+  const removeFeature = (index: number) => {
+    setFeatures((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const appendObjective = (value: string = "") => {
+    setObjectives((prev) => [...prev, value]);
+  };
+
+  const removeObjective = (index: number) => {
+    setObjectives((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const resetFormAndState = (formData?: Partial<SegmentFormData>) => {
+    if (formData) {
+      reset(formData);
+      setFeatures(formData.features || [""]);
+      setObjectives(formData.detailedInfo?.objectives || [""]);
+    } else {
+      reset();
+      setFeatures([""]);
+      setObjectives([""]);
+    }
+  };
 
   // These field arrays are defined for future use in extended form
   // const { fields: prerequisiteFields, append: appendPrerequisite, remove: removePrerequisite } = useFieldArray({
@@ -283,7 +296,7 @@ const AdminCoreAreas = () => {
           onClick={() => {
             setEditingSegment(null);
             setIsModalOpen(true);
-            reset({
+            resetFormAndState({
               title: "",
               description: "",
               icon: "FaRocket",
@@ -365,7 +378,7 @@ const AdminCoreAreas = () => {
             onClick={() => {
               setEditingSegment(null);
               setIsModalOpen(true);
-              reset({
+              resetFormAndState({
                 title: "",
                 description: "",
                 icon: "FaRocket",
@@ -571,11 +584,13 @@ const AdminCoreAreas = () => {
 
                     const segmentData = {
                       ...processedData,
+                      features: features.filter((f) => f.trim() !== ""),
                       order: editingSegment
                         ? editingSegment.order
                         : segments.length + 1,
                       detailedInfo: {
                         ...processedData.detailedInfo,
+                        objectives: objectives.filter((o) => o.trim() !== ""),
                         relatedCourses:
                           editingSegment?.detailedInfo.relatedCourses || [],
                         resources: editingSegment?.detailedInfo.resources || [],
@@ -616,7 +631,7 @@ const AdminCoreAreas = () => {
                     }
 
                     setIsModalOpen(false);
-                    reset();
+                    resetFormAndState();
                     setEditingSegment(null);
                   } catch (err) {
                     console.error("Error saving segment:", err);
@@ -780,10 +795,15 @@ const AdminCoreAreas = () => {
                         <span className="label-text font-medium">Features</span>
                       </label>
                       <div className="space-y-2">
-                        {featureFields.map((field, index) => (
-                          <div key={field.id} className="flex gap-2">
+                        {features.map((feature, index) => (
+                          <div key={index} className="flex gap-2">
                             <input
-                              {...register(`features.${index}` as const)}
+                              value={feature}
+                              onChange={(e) => {
+                                const newFeatures = [...features];
+                                newFeatures[index] = e.target.value;
+                                setFeatures(newFeatures);
+                              }}
                               type="text"
                               className="input input-bordered input-sm flex-1"
                               placeholder={`Feature ${index + 1}`}
@@ -792,7 +812,7 @@ const AdminCoreAreas = () => {
                               type="button"
                               onClick={() => removeFeature(index)}
                               className="btn btn-sm btn-error btn-outline"
-                              disabled={featureFields.length <= 1}
+                              disabled={features.length <= 1}
                             >
                               <FaTrash />
                             </button>
@@ -886,12 +906,15 @@ const AdminCoreAreas = () => {
                         </span>
                       </label>
                       <div className="space-y-2">
-                        {objectiveFields.map((field, index) => (
-                          <div key={field.id} className="flex gap-2">
+                        {objectives.map((objective, index) => (
+                          <div key={index} className="flex gap-2">
                             <input
-                              {...register(
-                                `detailedInfo.objectives.${index}` as const
-                              )}
+                              value={objective}
+                              onChange={(e) => {
+                                const newObjectives = [...objectives];
+                                newObjectives[index] = e.target.value;
+                                setObjectives(newObjectives);
+                              }}
                               type="text"
                               className="input input-bordered input-sm flex-1"
                               placeholder={`Objective ${index + 1}`}
@@ -900,7 +923,7 @@ const AdminCoreAreas = () => {
                               type="button"
                               onClick={() => removeObjective(index)}
                               className="btn btn-sm btn-error btn-outline"
-                              disabled={objectiveFields.length <= 1}
+                              disabled={objectives.length <= 1}
                             >
                               <FaTrash />
                             </button>
@@ -978,7 +1001,7 @@ const AdminCoreAreas = () => {
   function handleEditSegment(segment: Segment) {
     setEditingSegment(segment);
     setIsModalOpen(true);
-    reset({
+    resetFormAndState({
       title: segment.title,
       description: segment.description,
       icon: segment.icon,
