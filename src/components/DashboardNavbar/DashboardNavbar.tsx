@@ -6,6 +6,8 @@ import EventsForm from "../Admin/EventsForm/EventsForm";
 import AllDashbordEvents from "../Admin/AllDashbordEvents/AllDashbordEvents";
 import AdminFAQs from "../Admin/AdminFAQs/AdminFAQs";
 import AdminGallery from "../Admin/AdminGallery/AdminGallery";
+import AdminMessages from "../Admin/AdminMessages/AdminMessages";
+import AdminCoreAreas from "../Admin/AdminCoreAreas/AdminCoreAreas";
 
 const TABS = [
   "People",
@@ -175,6 +177,8 @@ const DashboardNavbar: React.FC = () => {
           {/* Fallback simple content for other sections while expanding panels */}
           {TABS[activeIndex] === "FAQs" && <AdminFAQs />}
           {TABS[activeIndex] === "Gallery" && <AdminGallery />}
+          {TABS[activeIndex] === "Messages" && <AdminMessages />}
+          {TABS[activeIndex] === "Core Areas" && <AdminCoreAreas />}
           {![
             "People",
             "Hero content",
@@ -182,6 +186,8 @@ const DashboardNavbar: React.FC = () => {
             "Events",
             "FAQs",
             "Gallery",
+            "Messages",
+            "Core Areas",
           ].includes(TABS[activeIndex]) && (
             <div>
               <h3 className="text-lg font-semibold">{TABS[activeIndex]}</h3>

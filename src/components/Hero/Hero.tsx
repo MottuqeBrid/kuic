@@ -1,60 +1,123 @@
+import { useState, useEffect } from "react";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from "react-responsive-carousel";
 import { motion } from "motion/react";
 import { Link } from "react-router";
-import { FaArrowRight } from "react-icons/fa";
+import { FaArrowRight, FaSpinner } from "react-icons/fa";
+import axiosInstance from "../../hooks/axiosInstance";
 
-const carouselData = [
-  {
-    id: 1,
-    image: "/kuic.jpg",
-    title: "Welcome to KUIC",
-    subtitle: "Khulna University Innovation Club",
-    description:
-      "Empowering students to innovate, create, and transform ideas into reality through technology and collaboration.",
-    cta: "Join Our Community",
-    ctaLink: "/join",
-    overlay: "from-black/60 via-black/30 to-transparent",
-  },
-  {
-    id: 2,
-    image: "/kuic.jpg",
-    title: "Innovation Hub",
-    subtitle: "Where Ideas Come to Life",
-    description:
-      "Connect with like-minded innovators, participate in hackathons, and build the future of technology together.",
-    cta: "Explore Events",
-    ctaLink: "/events",
-    overlay: "from-primary/80 via-primary/40 to-transparent",
-  },
-  {
-    id: 3,
-    image: "/kuic.jpg",
-    title: "Tech Community",
-    subtitle: "Learn, Build, Grow",
-    description:
-      "Access workshops, mentorship programs, and cutting-edge resources to accelerate your tech journey.",
-    // cta: "Start Learning",
-    // ctaLink: "/learn",
-    overlay: "from-secondary/80 via-secondary/40 to-transparent",
-  },
-];
+interface SlideSettings {
+  showCTA: boolean;
+  autoPlay: boolean;
+  transitionTime: number;
+  interval: number;
+}
+
+interface Metadata {
+  createdBy?: string;
+  updatedBy?: string;
+  category: "hero" | "banner" | "promotion" | "announcement";
+  tags: string[];
+}
+
+interface HeroSlide {
+  _id?: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  cta?: string;
+  ctaLink?: string;
+  overlay: string;
+  isActive: boolean;
+  order: number;
+  slideSettings: SlideSettings;
+  metadata: Metadata;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 const Hero = () => {
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSlides = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await axiosInstance.get("/carousel/getAllSlides");
+
+        // Filter only active slides and sort by order
+        const activeSlides = (response.data.slides || [])
+          .filter((slide: HeroSlide) => slide.isActive)
+          .sort((a: HeroSlide, b: HeroSlide) => a.order - b.order);
+
+        setSlides(activeSlides);
+      } catch (err) {
+        console.error("Error fetching hero slides:", err);
+        setError("Failed to load hero slides");
+        setSlides([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSlides();
+  }, []);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="relative w-full h-[80vh] flex items-center justify-center bg-base-200">
+        <div className="text-center">
+          <FaSpinner className="animate-spin text-4xl text-primary mx-auto mb-4" />
+          <p className="text-lg text-base-content/70">Loading hero slides...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || slides.length === 0) {
+    return (
+      <div className="relative w-full h-[80vh] flex items-center justify-center bg-base-200">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-4">📸</div>
+          <h2 className="text-2xl font-bold text-base-content mb-2">
+            {error ? "Unable to Load Slides" : "No Active Slides"}
+          </h2>
+          <p className="text-base-content/70">
+            {error
+              ? "There was an error loading the hero slides. Please try again later."
+              : "No active hero slides are currently available."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Get settings from first slide (assuming all slides share same carousel settings)
+  const carouselSettings = slides[0]?.slideSettings || {
+    showCTA: true,
+    autoPlay: true,
+    transitionTime: 800,
+    interval: 5000,
+  };
+
   return (
     <div className="relative">
       <Carousel
         className="w-full"
-        autoPlay={true}
+        autoPlay={carouselSettings.autoPlay}
         infiniteLoop={true}
         showThumbs={false}
         showStatus={false}
         showArrows={true}
         showIndicators={true}
-        interval={5000}
-        transitionTime={800}
-        swipeable={true}
-        emulateTouch={true}
+        interval={carouselSettings.interval}
+        transitionTime={carouselSettings.transitionTime}
         stopOnHover={false}
         useKeyboardArrows={true}
         renderArrowPrev={(onClickHandler, hasPrev, label) =>
@@ -124,7 +187,7 @@ const Hero = () => {
           />
         )}
       >
-        {carouselData.map((slide, index) => (
+        {slides.map((slide, index) => (
           <div
             key={index}
             className="relative w-full h-[80vh] overflow-hidden rounded-b-2xl"
@@ -182,22 +245,24 @@ const Hero = () => {
                     transition={{ duration: 0.8, delay: 0.8 }}
                     className="pt-6"
                   >
-                    {slide.ctaLink && slide.cta && (
-                      <>
-                        <Link
-                          to={slide.ctaLink}
-                          className="inline-flex items-center gap-3 bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-full text-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
-                        >
-                          {slide.cta}
-                          <motion.div
-                            whileHover={{ x: 5 }}
-                            transition={{ duration: 0.2 }}
+                    {slide.slideSettings.showCTA &&
+                      slide.ctaLink &&
+                      slide.cta && (
+                        <>
+                          <Link
+                            to={slide.ctaLink}
+                            className="inline-flex items-center gap-3 bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-full text-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
                           >
-                            <FaArrowRight />
-                          </motion.div>
-                        </Link>
-                      </>
-                    )}
+                            {slide.cta}
+                            <motion.div
+                              whileHover={{ x: 5 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <FaArrowRight />
+                            </motion.div>
+                          </Link>
+                        </>
+                      )}
                   </motion.div>
                 </motion.div>
               </div>

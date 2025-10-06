@@ -17,7 +17,8 @@ interface EventItem {
   time: string;
   location: string;
   category: string;
-  image: string;
+  thumb: string;
+
   status?: string;
 }
 
@@ -135,7 +136,7 @@ const Events = () => {
             >
               <div className="relative h-44 sm:h-48 md:h-40 lg:h-44">
                 <img
-                  src={ev.image}
+                  src={ev.thumb}
                   alt={ev.title}
                   className="w-full h-full object-cover"
                   loading="lazy"
